@@ -1,1 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One to One Correspondence</title>
 
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f7c948;
+}
+
+.container {
+    max-width: 500px;
+    margin: 20px auto;
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 15px;
+}
+
+h2, p {
+    text-align: center;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 15px 0;
+}
+
+.item {
+    font-size: 40px;
+    cursor: pointer;
+}
+
+.line {
+    flex: 1;
+    border-bottom: 2px dashed #000;
+    margin: 0 8px;
+}
+
+.drawn {
+    border-bottom: 4px solid green;
+}
+
+.selected {
+    outline: 3px solid blue;
+}
+
+button {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: green;
+    color: white;
+    width: 48%;
+}
+
+#confetti {
+    text-align: center;
+    font-size: 26px;
+}
+
+.feedback {
+    text-align: center;
+    height: 20px;
+    margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>One to One Correspondence</h2>
+<p>Tap rabbit → tap carrot</p>
+
+<div class="top-bar">
+    <div id="qNo">Q 1 / 5</div>
+    <div id="score">Score: 0</div>
+</div>
+
+<div id="gameArea"></div>
+
+<div id="confetti"></div>
+<div id="feedback" class="feedback"></div>
+
+<div style="display:flex; justify-content:space-between;">
+    <button onclick="restartGame()">Restart</button>
+    <button onclick="toggleSound()">Sound</button>
+</div>
+
+</div>
+
+<script>
+let currentQ = 0;
+let score = 0;
+let selected = null;
+let soundOn = true;
+
+const totalQ = 5;
+const totalRows = 3;
+
+let attempts = [];
+let completed = [];
+
+function loadQuestion() {
+    attempts = Array(totalRows).fill(0);
+    completed = Array(totalRows).fill(false);
+    selected = null;
+
+    document.getElementById("confetti").innerText = "";
+    document.getElementById("feedback").innerText = "";
+
+    let html = "";
+
+    for (let i = 0; i < totalRows; i++) {
+        html += `
+        <div class="row">
+            <div class="item rabbit" onclick="selectRabbit(${i})">🐰</div>
+            <div class="line" id="line${i}"></div>
+            <div class="item carrot" onclick="match(${i})">🥕</div>
+        </div>`;
+    }
+
+    document.getElementById("gameArea").innerHTML = html;
+    document.getElementById("qNo").innerText = "Q " + (currentQ + 1) + " / " + totalQ;
+}
+
+function selectRabbit(i) {
+    selected = i;
+    document.querySelectorAll('.rabbit').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.rabbit')[i].classList.add('selected');
+}
+
+function match(i) {
+    if (selected === null) {
+        showFeedback("Tap a rabbit first");
+        return;
+    }
+
+    if (completed[i]) {
+        showFeedback("Already done");
+        return;
+    }
+
+    if (selected === i) {
+        document.getElementById("line" + i).classList.add("drawn");
+        completed[i] = true;
+        score++;
+        updateScore();
+        showFeedback("Good! 🎉");
+        showConfetti();
+        checkNext();
+
+    } else {
+        attempts[i]++;
+        if (attempts[i] === 1) {
+            showFeedback("Try same row");
+        } else {
+            document.getElementById("line" + i).classList.add("drawn");
+            completed[i] = true;
+            showFeedback("See answer");
+            checkNext();
+        }
+    }
+
+    selected = null;
+}
+
+function checkNext() {
+    if (completed.every(v => v)) {
+        setTimeout(() => {
+            currentQ++;
+            if (currentQ < totalQ) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }, 1000);
+    }
+}
+
+function showFeedback(msg) {
+    document.getElementById("feedback").innerText = msg;
+}
+
+function updateScore() {
+    document.getElementById("score").innerText = "Score: " + score;
+}
+
+function showConfetti() {
+    document.getElementById("confetti").innerText = "🎉🎉🎉";
+    setTimeout(() => {
+        document.getElementById("confetti").innerText = "";
+    }, 800);
+}
+
+function endGame() {
+    document.getElementById("gameArea").innerHTML = "";
+    document.getElementById("feedback").innerText =
+        "Game Over! Score: " + score + " / " + (totalQ * totalRows);
+}
+
+function restartGame() {
+    currentQ = 0;
+    score = 0;
+    updateScore();
+    loadQuestion();
+}
+
+function toggleSound() {
+    soundOn = !soundOn;
+    showFeedback(soundOn ? "Sound On" : "Sound Off");
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>
